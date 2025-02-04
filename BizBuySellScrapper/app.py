@@ -1,31 +1,45 @@
+# The existing scrapers only allow for choosing one state with no additional information to choose from
+# 
+# 
+# 
+# 
+# 
+
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 
-# Generate a Google user agent
+# Generate a random Google user agent
 ua = UserAgent()
 headers = {'User-Agent': ua.google}
 
-# URL of the BizBuySell listings (you can modify this as needed)
-url = 'https://www.bizbuysell.com'
+# Target listings page for a specific state (modify as needed)
+url = 'https://www.bizbuysell.com/{something}businesses-for-sale/'
 
-# Send a GET request to the site
+# Send a GET request to fetch the listings page
 response = requests.get(url, headers=headers)
 
-# Check if the request was successful
 if response.status_code == 200:
     print("Successfully fetched the page!")
-    print(response.text)
     
-    # Parse the content of the page with BeautifulSoup
-    soup = BeautifulSoup(response.content, 'html.parser')
+    # Parse the HTML content
+    soup = BeautifulSoup(response.text, 'html.parser')
 
+    # Find all business listings (adjust the class if needed)
+    listings = soup.find_all('a', class_='diamond')
 
-    # Extract specific data from the page (example: find all listing titles)
-    listings = soup.find_all('a', class_='listing-title')  # Adjust class name as per site structure
-    for listing in listings:
-        title = listing.get_text(strip=True)
-        print(title)
+    if listings:
+        print("\nFound Listings:")
+        for listing in listings:
+            title_tag = listing.find('h3', class_='title')  # Extract title
+            if title_tag:
+                title = title_tag.get_text(strip=True)
+                link = listing.get('href')  # Extract the link
+                print(f"- {title} ({link})")
+
+    else:
+        print("No listings found. Check the class name or site structure.")
 
 else:
     print(f"Failed to retrieve the page. Status code: {response.status_code}")
+
