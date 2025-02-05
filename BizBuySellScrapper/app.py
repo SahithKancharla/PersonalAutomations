@@ -1,9 +1,8 @@
 # The existing scrapers only allow for choosing one state with no additional information to choose from
 # So I want to provide an API that is able to atleast reach that level of information that anyone can use for free.
 # This scrapper allows you to get all the elements, from multiple pages of a category.
-# If you want I added file 
 # 
-# 
+# This is a good baseline if you want tb build your own scraper.
 
 
 import sys
