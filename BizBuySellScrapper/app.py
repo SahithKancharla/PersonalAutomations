@@ -1,7 +1,7 @@
 # The existing scrapers only allow for choosing one state with no additional information to choose from
 # So I want to provide an API that is able to atleast reach that level of information that anyone can use for free.
-# 
-# 
+# This scrapper allows you to get all the elements, from multiple pages of a category.
+# If you want I added file 
 # 
 # 
 
@@ -32,10 +32,14 @@ USER_AGENTS = [
     'Safari/17612.3.14.1.6 CFNetwork/1327.0.4 Darwin/21.2.0',
 ]
 
-async def scrape_bizbuysell(cityname=None, numberofpages = 1):
+BASE_URL = "https://www.bizbuysell.com"
+
+async def scrape_bizbuysell(url=None, cityname=None, number_of_pages = 1):
     cityname_part = f"{cityname.lower()}-" if cityname else ""
     
-    url = f'https://www.bizbuysell.com/{cityname_part}businesses-for-sale/'
+    if not url:   
+        url = f'{BASE_URL}/{cityname_part}businesses-for-sale/'
+
     useragent = random.choice(USER_AGENTS)
     print(useragent + "\n")
     headers = {
@@ -47,37 +51,38 @@ async def scrape_bizbuysell(cityname=None, numberofpages = 1):
         'Referer': 'https://www.google.com/',
     }
 
+    results = []
+    async with aiohttp.ClientSession() as session:
+        for page in range(1, number_of_pages + 1):
+            paginated_url = f"{url}/{page}/"
+            async with rate_limiter:
+                try:
+                    async with session.get(paginated_url, headers=headers, timeout=5) as response:
+                        if response.status != 200:
+                            logger.error(f"Failed to retrieve page {page}. Status code: {response.status}")
+                            continue
+                        
+                        html = await response.text()
+                        soup = BeautifulSoup(html, 'html.parser')
+                        listings = soup.find_all('a', class_='diamond')
 
-    async with rate_limiter:
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, headers=headers, timeout=2) as response:
-                    if response.status != 200:
-                        return {"error": f"Failed to retrieve the page. Status code: {response.status}"}
+                        for listing in listings:
+                            title_tag = listing.find('h3', class_='title')
+                            if title_tag:
+                                title = title_tag.get_text(strip=True)
+                                link = listing.get('href')
+                                results.append({"title": title, "link": link})
                     
-                    html = await response.text()
-                    soup = BeautifulSoup(html, 'html.parser')
-                    listings = soup.find_all('a', class_='diamond')
-                    
-                    results = []
-                    for listing in listings:
-                        title_tag = listing.find('h3', class_='title')
-                        if title_tag:
-                            title = title_tag.get_text(strip=True)
-                            link = listing.get('href')
-                            results.append({"title": title, "link": link})
-                    
-                    return results if results else {"message": "No listings found."}
-        except asyncio.TimeoutError:
-            return {"error": "Request timed out. The website might be down or slow."}
-        except Exception as e:
-            return {"error": f"Request failed: {e}"}
+                except asyncio.TimeoutError:
+                    logger.error(f"Page {page} request timed out.")
+                except Exception as e:
+                    logger.error(f"Request failed on page {page}: {e}")
+
+    return results if results else {"message": "No listings found."}
 
 if __name__ == '__main__':
-    # cityname = input("Enter city name (or press enter to skip): ").strip()
-    # cityname = cityname.replace(" ", "-").lower() if cityname else None
     if sys.platform.startswith('win'):
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    results = asyncio.run(scrape_bizbuysell())
+    results = asyncio.run(scrape_bizbuysell(None, None, 2))
     print(results)
 
