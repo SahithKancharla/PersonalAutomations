@@ -1,1 +1,1 @@
-This is a biz buy sell scrapper that would allow you to scraper the information that you want
+This is a biz buy sell scrapper that would allow you to scraper the information that you want to search by city or by the link that your provide. It have some good features that the exsiting once dont have. Feel free to give it a try.
