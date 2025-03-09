@@ -3,7 +3,7 @@ import webbrowser
 import time
 
 # Replace 'file.csv' with your actual CSV file path
-csv_file = 'file.csv'
+csv_file = 'links.csv'
 
 # Open the CSV file and read URLs
 with open(csv_file, newline='') as file:
@@ -16,7 +16,7 @@ for i, url in enumerate(urls[:50], 1):
     time.sleep(0.5)  # Small delay to avoid overwhelming the system
 
 # Wait for user input to open the next 20 links at a time
-index = 50
+index = 15
 while index < len(urls):
     input("Press Enter to open the next 20 links...")
     for url in urls[index:index + 20]:
